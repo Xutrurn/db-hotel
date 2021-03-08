@@ -1,0 +1,107 @@
+1. Conta gli ospiti raggruppandoli per anno di nascita.
+
+SELECT COUNT(`id`) AS `numero_ospiti`, YEAR(`date_of_birth`) AS `anno_di_nascita`
+FROM `ospiti`
+GROUP BY `anno_di_nascita`
+ORDER BY `numero_ospiti` DESC
+
+--------------------------------------------------------------------------------------------------------------------
+
+2. Somma i prezzi dei pagamenti raggruppandoli per status. (In totale ci sono 3 righe).
+
+SELECT `status` AS `stato_pagamento`, SUM(`price`) AS `totale`
+FROM `pagamenti` 
+GROUP BY `stato_pagamento`
+
+--------------------------------------------------------------------------------------------------------------------
+
+3. Conta quante volte è stata prenotata ogni stanza.
+
+SELECT `stanza_id`,COUNT(`stanza_id`) as `numero_prenotazioni`
+FROM `prenotazioni`
+GROUP BY `stanza_id`
+ORDER BY `numero_prenotazioni` DESC
+
+--------------------------------------------------------------------------------------------------------------------
+
+4. Fai un’analisi per vedere se ci sono ore in cui le prenotazioni sono più frequenti.
+
+SELECT HOUR(`created_at`) AS `ora_di_prenotazione`, COUNT(`created_at`) `totale_prenotazioni`
+FROM `prenotazioni`
+GROUP BY `ora_di_prenotazione`
+ORDER BY `totale_prenotazioni` DESC
+
+--------------------------------------------------------------------------------------------------------------------
+
+5. Stampare tutti gli ospiti per ogni prenotazione.
+
+SELECT prenotazioni_has_ospiti.prenotazione_id AS `numero_prenotazione`, ospiti.lastname AS `cognome`, ospiti.name AS `nome`
+FROM `prenotazioni_has_ospiti`
+INNER JOIN `ospiti`
+ON ospiti.id = prenotazioni_has_ospiti.ospite_id
+
+--------------------------------------------------------------------------------------------------------------------
+
+6. Stampare Nome, Cognome, Prezzo del Pagante per tutte le prenotazioni fatte a Maggio 2018.
+
+SELECT ospiti.lastname AS `cognome`, ospiti.name AS `nome`, pagamenti.price AS `prezzo`
+FROM `prenotazioni`
+INNER JOIN `prenotazioni_has_ospiti`
+ON prenotazioni_has_ospiti.prenotazione_id = prenotazioni.id
+INNER JOIN ospiti on ospiti.id = prenotazioni_has_ospiti.ospite_id 
+INNER JOIN `paganti` 
+ON paganti.ospite_id = ospiti.id 
+INNER JOIN `pagamenti` 
+ON pagamenti.pagante_id = paganti.id 
+WHERE MONTH(prenotazioni_has_ospiti.created_at) = 05 
+AND YEAR(prenotazioni_has_ospiti.created_at) = 2018
+ORDER BY `cognome` ASC
+
+--------------------------------------------------------------------------------------------------------------------
+
+7. Fai la somma di tutti i prezzi delle prenotazioni per le stanze del primo piano.
+
+SELECT SUM(pagamenti.price) AS 'totale_prezzi_primo_piano'
+FROM `pagamenti`
+INNER JOIN `prenotazioni`
+ON pagamenti.prenotazione_id = prenotazioni.id
+INNER JOIN `stanze`
+ON prenotazioni.stanza_id = stanze.id
+WHERE stanze.floor = 1
+AND pagamenti.status = 'accepted';
+
+--------------------------------------------------------------------------------------------------------------------
+
+8. Prendi i dati di fatturazione per la prenotazione con id=7
+
+SELECT pagamenti.prenotazione_id AS `numero_prenotazione`,paganti.lastname AS `cognome`, paganti.name AS `nome`,paganti.address AS `residenza` , pagamenti.price AS `importo`, pagamenti.status AS `stato_pagamento`
+FROM `paganti`
+INNER JOIN `pagamenti`
+ON paganti.id = pagamenti.pagante_id
+WHERE pagamenti.prenotazione_id = 7
+
+--------------------------------------------------------------------------------------------------------------------
+
+Bonus:
+1. Come si chiamano gli ospiti che hanno fatto più di due prenotazioni?
+
+SELECT ospiti.lastname AS 'cognome', ospiti.name AS 'nome', COUNT(prenotazioni_has_ospiti.ospite_id) AS numero_prenotazioni
+FROM `ospiti`
+INNER JOIN `prenotazioni_has_ospiti`
+ON ospiti.id = prenotazioni_has_ospiti.ospite_id
+GROUP BY prenotazioni_has_ospiti.ospite_id
+HAVING numero_prenotazioni > 2
+
+--------------------------------------------------------------------------------------------------------------------
+
+Bonus:
+2.  Le stanze sono state tutte prenotate almeno una volta? (Visualizzare le stanze non ancora prenotate)
+
+SELECT *
+FROM `stanze`
+LEFT JOIN `prenotazioni`
+ON stanze.id = prenotazioni.stanza_id
+WHERE prenotazioni.id IS NULL
+
+--------------------------------------------------------------------------------------------------------------------
+
